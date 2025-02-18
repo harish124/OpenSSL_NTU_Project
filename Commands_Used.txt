@@ -1,0 +1,44 @@
+---------------------------------------------------------------------------------
+                               SHA-512 digest command:
+---------------------------------------------------------------------------------
+openssl dgst -sha512 -hex plaintext_file.pdf | awk '{ print $2 }' > digest_file.hex
+
+#Store only the hash in the digest_file.hex
+
+
+---------------------------------------------------------------------------------
+		RSA Sign using private key and decrypt using public key
+---------------------------------------------------------------------------------
+openssl dgst -sha512 -sign RSA_private_key.pem -out signed_file plaintext_file.pdf
+
+openssl dgst -sha512 -verify RSA_public_key.pem -signature signed_file plaintext_file.pdf
+
+
+
+
+---------------------------------------------------------------------------------
+                                    AES:
+---------------------------------------------------------------------------------
+#AES Key generation:
+#32 bytes = 256bits
+openssl rand -out AES_key.txt 32
+
+AES - RSA encrypt and decrypt:
+openssl pkeyutl -encrypt -pubin -inkey "RSA_public_key.pem" -in AES_key.txt -out encrypted_AES_key.txt
+
+openssl pkeyutl -decrypt -inkey "RSA_private_key.pem" -in encrypted_AES_key.txt -out decrypted_AES_key.txt
+
+Compare expected and actual results:
+diff AES_key.txt decrypted_AES_key.txt
+
+AES file Encryption: Ctr mode
+
+openssl rand -hex 16 > iv.txt
+
+openssl enc -aes-256-ctr -K $(xxd -p AES_key.txt | tr -d '\n') -iv $(cat iv.txt) -in plaintext_file.pdf -out ciphertext_file
+
+openssl enc -d -aes-256-ctr -K $(xxd -p AES_key.txt | tr -d '\n') -in ciphertext_file -out decrypted_file -iv $(cat iv.txt)
+
+Compare expected and actual results:
+diff plaintext_file.pdf decrypted_file
+---------------------------------------------------------------------------------
